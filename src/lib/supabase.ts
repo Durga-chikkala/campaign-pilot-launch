@@ -23,10 +23,11 @@ export type Database = {
           status: 'draft' | 'active' | 'completed' | 'paused'
           created_at: string
           updated_at: string
-          csv_url?: string
-          total_emails?: number
-          sent_emails?: number
-          failed_emails?: number
+          completed_at?: string
+          template_id?: string
+          total_recipients?: number
+          sent_count?: number
+          failed_count?: number
         }
         Insert: {
           id?: string
@@ -35,10 +36,11 @@ export type Database = {
           status?: 'draft' | 'active' | 'completed' | 'paused'
           created_at?: string
           updated_at?: string
-          csv_url?: string
-          total_emails?: number
-          sent_emails?: number
-          failed_emails?: number
+          completed_at?: string
+          template_id?: string
+          total_recipients?: number
+          sent_count?: number
+          failed_count?: number
         }
         Update: {
           id?: string
@@ -47,10 +49,11 @@ export type Database = {
           status?: 'draft' | 'active' | 'completed' | 'paused'
           created_at?: string
           updated_at?: string
-          csv_url?: string
-          total_emails?: number
-          sent_emails?: number
-          failed_emails?: number
+          completed_at?: string
+          template_id?: string
+          total_recipients?: number
+          sent_count?: number
+          failed_count?: number
         }
       }
       templates: {
@@ -60,8 +63,9 @@ export type Database = {
           name: string
           subject: string
           body: string
-          placeholders: string[]
+          placeholders?: string[]
           created_at: string
+          updated_at?: string
         }
         Insert: {
           id?: string
@@ -71,6 +75,7 @@ export type Database = {
           body: string
           placeholders?: string[]
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -80,6 +85,7 @@ export type Database = {
           body?: string
           placeholders?: string[]
           created_at?: string
+          updated_at?: string
         }
       }
       placeholder_mappings: {
@@ -88,7 +94,7 @@ export type Database = {
           campaign_id: string
           user_id: string
           placeholder: string
-          csv_header: string
+          csv_column: string
           created_at: string
         }
         Insert: {
@@ -96,7 +102,7 @@ export type Database = {
           campaign_id: string
           user_id: string
           placeholder: string
-          csv_header: string
+          csv_column: string
           created_at?: string
         }
         Update: {
@@ -104,7 +110,7 @@ export type Database = {
           campaign_id?: string
           user_id?: string
           placeholder?: string
-          csv_header?: string
+          csv_column?: string
           created_at?: string
         }
       }
@@ -115,7 +121,8 @@ export type Database = {
           user_id: string
           host: string
           port: number
-          sender_email: string
+          email: string
+          password: string
           sender_name: string
           created_at: string
         }
@@ -125,7 +132,8 @@ export type Database = {
           user_id: string
           host: string
           port: number
-          sender_email: string
+          email: string
+          password: string
           sender_name: string
           created_at?: string
         }
@@ -135,7 +143,8 @@ export type Database = {
           user_id?: string
           host?: string
           port?: number
-          sender_email?: string
+          email?: string
+          password?: string
           sender_name?: string
           created_at?: string
         }
@@ -145,8 +154,9 @@ export type Database = {
           id: string
           campaign_id: string
           user_id: string
-          recipient_email: string
+          email: string
           status: 'sent' | 'failed' | 'pending'
+          data?: any
           error_message?: string
           sent_at?: string
           created_at: string
@@ -155,8 +165,9 @@ export type Database = {
           id?: string
           campaign_id: string
           user_id: string
-          recipient_email: string
-          status: 'sent' | 'failed' | 'pending'
+          email: string
+          status?: 'sent' | 'failed' | 'pending'
+          data?: any
           error_message?: string
           sent_at?: string
           created_at?: string
@@ -165,8 +176,9 @@ export type Database = {
           id?: string
           campaign_id?: string
           user_id?: string
-          recipient_email?: string
+          email?: string
           status?: 'sent' | 'failed' | 'pending'
+          data?: any
           error_message?: string
           sent_at?: string
           created_at?: string
