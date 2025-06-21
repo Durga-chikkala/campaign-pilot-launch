@@ -48,7 +48,7 @@ const EmailTemplateStep: React.FC<EmailTemplateStepProps> = ({
   const loadExistingTemplate = async () => {
     try {
       const { data, error } = await supabase
-        .from('email_templates')
+        .from('templates')
         .select('*')
         .eq('campaign_id', campaignId)
         .eq('user_id', user?.id)
@@ -87,7 +87,7 @@ const EmailTemplateStep: React.FC<EmailTemplateStepProps> = ({
 
       // Check if template exists
       const { data: existingTemplate } = await supabase
-        .from('email_templates')
+        .from('templates')
         .select('id')
         .eq('campaign_id', campaignId)
         .eq('user_id', user?.id)
@@ -96,7 +96,7 @@ const EmailTemplateStep: React.FC<EmailTemplateStepProps> = ({
       if (existingTemplate) {
         // Update existing template
         const { error } = await supabase
-          .from('email_templates')
+          .from('templates')
           .update(templateData)
           .eq('id', existingTemplate.id)
 
@@ -104,7 +104,7 @@ const EmailTemplateStep: React.FC<EmailTemplateStepProps> = ({
       } else {
         // Create new template
         const { error } = await supabase
-          .from('email_templates')
+          .from('templates')
           .insert([templateData])
 
         if (error) throw error

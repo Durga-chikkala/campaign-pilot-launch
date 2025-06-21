@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
@@ -32,15 +31,19 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
   const [testEmail, setTestEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [testLoading, setTestLoading] = useState(false)
+  const [configLoading, setConfigLoading] = useState(true) // Add loading state for initial load
   const { user } = useAuth()
   const { toast } = useToast()
 
   useEffect(() => {
-    loadExistingConfig()
-  }, [campaignId])
+    if (campaignId && user?.id) {
+      loadExistingConfig()
+    }
+  }, [campaignId, user?.id]) // Add user?.id as dependency
 
   const loadExistingConfig = async () => {
     try {
+      setConfigLoading(true)
       const { data, error } = await supabase
         .from('smtp_configs')
         .select('*')
@@ -48,15 +51,42 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
         .eq('user_id', user?.id)
         .single()
 
-      if (data) {
-        setHost(data.host)
-        setPort(data.port)
-        setSenderEmail(data.sender_email)
-        setSenderName(data.sender_name)
-        // Don't load the password for security
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
+        console.error('Error loading SMTP config:', error)
+        toast({
+          title: "Error loading configuration",
+          description: error.message,
+          variant: "destructive",
+        })
+        return
       }
-    } catch (error) {
-      // Config doesn't exist yet, which is fine
+
+      if (data) {
+        setHost(data.host || '')
+        setPort(data.port || 587)
+        setSenderEmail(data.sender_email || data.email || '') // Handle both field names
+        setSenderName(data.sender_name || '')
+        // Don't load the password for security reasons
+        setAppPassword('') // Always require re-entering password
+        
+        // Pass existing data to parent component
+        onDataChange({
+          host: data.host || '',
+          port: data.port || 587,
+          senderEmail: data.sender_email || data.email || '',
+          senderName: data.sender_name || '',
+          appPassword: '' // Don't pass saved password
+        })
+      }
+    } catch (error: any) {
+      console.error('Unexpected error loading SMTP config:', error)
+      toast({
+        title: "Error loading configuration",
+        description: "An unexpected error occurred while loading your SMTP configuration.",
+        variant: "destructive",
+      })
+    } finally {
+      setConfigLoading(false)
     }
   }
 
@@ -70,50 +100,78 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
       return
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(senderEmail)) {
+      toast({
+        title: "Invalid email format",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate port number
+    if (port < 1 || port > 65535) {
+      toast({
+        title: "Invalid port number",
+        description: "Please enter a valid port number (1-65535).",
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
     try {
       const configData = {
         campaign_id: campaignId,
         user_id: user?.id,
-        host,
+        host: host.trim(),
         port,
-        sender_email: senderEmail,
-        sender_name: senderName,
+        email: senderEmail.trim(), // Use consistent field name
+        sender_name: senderName.trim(),
+        password: appPassword.trim()
       }
 
       // Check if config exists
-      const { data: existingConfig } = await supabase
+      const { data: existingConfig, error: fetchError } = await supabase
         .from('smtp_configs')
         .select('id')
         .eq('campaign_id', campaignId)
         .eq('user_id', user?.id)
         .single()
 
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError
+      }
+
+      let result
       if (existingConfig) {
         // Update existing config
-        const { error } = await supabase
+        result = await supabase
           .from('smtp_configs')
           .update(configData)
           .eq('id', existingConfig.id)
-
-        if (error) throw error
+          .select()
       } else {
         // Create new config
-        const { error } = await supabase
+        result = await supabase
           .from('smtp_configs')
           .insert([configData])
-
-        if (error) throw error
+          .select()
       }
 
-      // Save password separately in Supabase secrets (this would need to be implemented)
-      // For now, we'll just pass it to the next step
+      if (result.error) {
+        throw result.error
+      }
+
+      // Pass data to parent component
       onDataChange({
-        host,
+        host: host.trim(),
         port,
-        senderEmail,
-        senderName,
-        appPassword // In production, this should be handled more securely
+        senderEmail: senderEmail.trim(),
+        senderName: senderName.trim(),
+        appPassword: appPassword.trim() // In production, this should be handled more securely
       })
 
       toast({
@@ -123,9 +181,10 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
 
       onNext()
     } catch (error: any) {
+      console.error('Error saving SMTP config:', error)
       toast({
         title: "Error saving configuration",
-        description: error.message,
+        description: error.message || "An unexpected error occurred while saving your configuration.",
         variant: "destructive",
       })
     } finally {
@@ -143,19 +202,39 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
       return
     }
 
+    // Validate test email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(testEmail)) {
+      toast({
+        title: "Invalid email format",
+        description: "Please enter a valid test email address.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!host.trim() || !senderEmail.trim() || !appPassword.trim()) {
+      toast({
+        title: "SMTP configuration incomplete",
+        description: "Please fill in all SMTP settings before sending a test email.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setTestLoading(true)
     try {
       // This would call a Supabase Edge Function to send a test email
       const { data, error } = await supabase.functions.invoke('send-test-email', {
         body: {
           campaignId,
-          testEmail,
+          testEmail: testEmail.trim(),
           smtpConfig: {
-            host,
+            host: host.trim(),
             port,
-            senderEmail,
-            senderName,
-            appPassword
+            senderEmail: senderEmail.trim(),
+            senderName: senderName.trim(),
+            appPassword: appPassword.trim()
           }
         }
       })
@@ -164,9 +243,10 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
 
       toast({
         title: "Test email sent!",
-        description: `Test email sent successfully to ${testEmail}`,
+        description: `Test email sent successfully to ${testEmail.trim()}`,
       })
     } catch (error: any) {
+      console.error('Test email error:', error)
       toast({
         title: "Test email failed",
         description: error.message || "Failed to send test email. Please check your SMTP settings.",
@@ -209,6 +289,24 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
     setPort(provider.port)
   }
 
+  // Show loading state while fetching existing config
+  if (configLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Configure SMTP Settings</h2>
+          <p className="text-gray-600">Loading existing configuration...</p>
+        </div>
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <motion.div
@@ -233,28 +331,30 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="host">SMTP Host</Label>
+                  <Label htmlFor="host">SMTP Host *</Label>
                   <Input
                     id="host"
                     placeholder="smtp.gmail.com"
                     value={host}
-                    onChange={(e) => setHost(e.target.value)}
+                    onChange={(e) => setHost(e.target.value)}s
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="port">Port</Label>
+                  <Label htmlFor="port">Port *</Label>
                   <Input
                     id="port"
                     type="number"
                     placeholder="587"
                     value={port}
                     onChange={(e) => setPort(parseInt(e.target.value) || 587)}
+                    min="1"
+                    max="65535"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="senderEmail">Sender Email</Label>
+                <Label htmlFor="senderEmail">Sender Email *</Label>
                 <Input
                   id="senderEmail"
                   type="email"
@@ -265,7 +365,7 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="senderName">Sender Name</Label>
+                <Label htmlFor="senderName">Sender Name *</Label>
                 <Input
                   id="senderName"
                   placeholder="Your Name or Company"
@@ -277,7 +377,7 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="appPassword">
                   <div className="flex items-center">
-                    App Password
+                    App Password *
                     <Shield className="w-4 h-4 ml-1 text-amber-500" />
                   </div>
                 </Label>
@@ -317,7 +417,7 @@ const SMTPConfigStep: React.FC<SMTPConfigStepProps> = ({
               </div>
               <Button
                 onClick={sendTestEmail}
-                disabled={testLoading || !host || !senderEmail || !appPassword || !testEmail}
+                disabled={testLoading || !host.trim() || !senderEmail.trim() || !appPassword.trim() || !testEmail.trim()}
                 variant="outline"
                 className="w-full"
               >

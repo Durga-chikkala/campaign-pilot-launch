@@ -59,7 +59,7 @@ const LogsStep: React.FC<LogsStepProps> = ({
   const fetchLogs = async () => {
     try {
       const { data, error } = await supabase
-        .from('email_logs')
+        .from('recipients')
         .select('*')
         .eq('campaign_id', campaignId)
         .eq('user_id', user?.id)
