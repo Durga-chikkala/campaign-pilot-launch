@@ -1,9 +1,16 @@
+
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = 'https://mmerrzhlvfedvywqvmvj.supabase.co'
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tZXJyemhsdmZlZHZ5d3F2bXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTg2MzUsImV4cCI6MjA2NjAzNDYzNX0.7M0SE-LhZ6e7NHdzTHbNf2XfaEvW4yKwo1iS4UJYMR4'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+})
 
 export type Database = {
   public: {
@@ -46,10 +53,9 @@ export type Database = {
           failed_emails?: number
         }
       }
-      email_templates: {
+      templates: {
         Row: {
           id: string
-          campaign_id: string
           user_id: string
           name: string
           subject: string
@@ -59,7 +65,6 @@ export type Database = {
         }
         Insert: {
           id?: string
-          campaign_id: string
           user_id: string
           name: string
           subject: string
@@ -69,7 +74,6 @@ export type Database = {
         }
         Update: {
           id?: string
-          campaign_id?: string
           user_id?: string
           name?: string
           subject?: string
@@ -136,7 +140,7 @@ export type Database = {
           created_at?: string
         }
       }
-      email_logs: {
+      recipients: {
         Row: {
           id: string
           campaign_id: string

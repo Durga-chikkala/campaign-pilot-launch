@@ -21,6 +21,7 @@ export type Database = {
           template_id: string | null
           total_recipients: number | null
           updated_at: string | null
+          user_id: string
         }
         Insert: {
           completed_at?: string | null
@@ -33,6 +34,7 @@ export type Database = {
           template_id?: string | null
           total_recipients?: number | null
           updated_at?: string | null
+          user_id: string
         }
         Update: {
           completed_at?: string | null
@@ -45,6 +47,7 @@ export type Database = {
           template_id?: string | null
           total_recipients?: number | null
           updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -63,6 +66,7 @@ export type Database = {
           csv_column: string
           id: string
           placeholder: string
+          user_id: string
         }
         Insert: {
           campaign_id: string
@@ -70,6 +74,7 @@ export type Database = {
           csv_column: string
           id?: string
           placeholder: string
+          user_id: string
         }
         Update: {
           campaign_id?: string
@@ -77,6 +82,7 @@ export type Database = {
           csv_column?: string
           id?: string
           placeholder?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -98,6 +104,7 @@ export type Database = {
           id: string
           sent_at: string | null
           status: string | null
+          user_id: string
         }
         Insert: {
           campaign_id: string
@@ -108,6 +115,7 @@ export type Database = {
           id?: string
           sent_at?: string | null
           status?: string | null
+          user_id: string
         }
         Update: {
           campaign_id?: string
@@ -118,6 +126,7 @@ export type Database = {
           id?: string
           sent_at?: string | null
           status?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -139,6 +148,7 @@ export type Database = {
           password: string
           port: number
           sender_name: string
+          user_id: string
         }
         Insert: {
           campaign_id: string
@@ -149,6 +159,7 @@ export type Database = {
           password: string
           port: number
           sender_name: string
+          user_id: string
         }
         Update: {
           campaign_id?: string
@@ -159,6 +170,7 @@ export type Database = {
           password?: string
           port?: number
           sender_name?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -179,6 +191,7 @@ export type Database = {
           placeholders: string[] | null
           subject: string
           updated_at: string | null
+          user_id: string
         }
         Insert: {
           body: string
@@ -188,6 +201,7 @@ export type Database = {
           placeholders?: string[] | null
           subject: string
           updated_at?: string | null
+          user_id: string
         }
         Update: {
           body?: string
@@ -197,6 +211,7 @@ export type Database = {
           placeholders?: string[] | null
           subject?: string
           updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

@@ -43,9 +43,8 @@ const CSVUploadStep: React.FC<CSVUploadStepProps> = ({
     try {
       // Load template placeholders
       const { data: template } = await supabase
-        .from('email_templates')
+        .from('templates')
         .select('placeholders')
-        .eq('campaign_id', campaignId)
         .eq('user_id', user?.id)
         .single()
 
@@ -62,7 +61,7 @@ const CSVUploadStep: React.FC<CSVUploadStepProps> = ({
 
       if (existingMappings) {
         const mappingsObj = existingMappings.reduce((acc, mapping) => {
-          acc[mapping.placeholder] = mapping.csv_header
+          acc[mapping.placeholder] = mapping.csv_column
           return acc
         }, {} as Record<string, string>)
         setMappings(mappingsObj)
@@ -71,11 +70,11 @@ const CSVUploadStep: React.FC<CSVUploadStepProps> = ({
       // Load existing CSV data if available
       const { data: campaign } = await supabase
         .from('campaigns')
-        .select('csv_url')
+        .select('*')
         .eq('id', campaignId)
         .single()
 
-      if (campaign?.csv_url) {
+      if (campaign && 'csv_url' in campaign && campaign.csv_url) {
         // Load CSV data from storage
         const { data: csvFile } = await supabase.storage
           .from('campaigns')
@@ -202,7 +201,7 @@ const CSVUploadStep: React.FC<CSVUploadStepProps> = ({
     try {
       // Upload CSV to Supabase Storage
       const csvBlob = new Blob([Papa.unparse(csvData)], { type: 'text/csv' })
-      const csvFileName = `campaign-${campaignId}-${Date.now()}.csv`
+      const csvFileName = `${user?.id}/campaign-${campaignId}-${Date.now()}.csv`
       
       const { error: uploadError } = await supabase.storage
         .from('campaigns')
@@ -215,7 +214,7 @@ const CSVUploadStep: React.FC<CSVUploadStepProps> = ({
         .from('campaigns')
         .update({ 
           csv_url: csvFileName,
-          total_emails: csvData.length
+          total_recipients: csvData.length
         })
         .eq('id', campaignId)
 
@@ -233,7 +232,7 @@ const CSVUploadStep: React.FC<CSVUploadStepProps> = ({
         campaign_id: campaignId,
         user_id: user?.id,
         placeholder,
-        csv_header: csvHeader
+        csv_column: csvHeader
       }))
 
       const { error: mappingError } = await supabase
