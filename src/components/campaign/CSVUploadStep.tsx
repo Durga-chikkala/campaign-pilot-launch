@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
@@ -346,7 +345,7 @@ const CSVUploadStep: React.FC<CSVUploadStepProps> = ({
               <div className="text-center py-8">
                 <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">No placeholders found in your template.</p>
-                <p className="text-sm text-gray-500 mt-1">Go back and add placeholders like {{name}} to your template.</p>
+                <p className="text-sm text-gray-500 mt-1">Go back and add placeholders like {`{{name}}`} to your template.</p>
               </div>
             ) : (
               <div className="space-y-4">
