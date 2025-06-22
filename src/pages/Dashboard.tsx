@@ -198,16 +198,16 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage your email campaigns</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1 text-sm md:text-base">Manage your email campaigns</p>
         </div>
         <Button 
           onClick={() => navigate('/campaign/new')}
-          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Campaign
@@ -215,7 +215,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -227,7 +227,7 @@ const Dashboard = () => {
               <Mail className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-900">{stats.totalCampaigns}</div>
+              <div className="text-xl md:text-2xl font-bold text-blue-900">{stats.totalCampaigns}</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -243,7 +243,7 @@ const Dashboard = () => {
               <TrendingUp className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-900">{stats.activeCampaigns}</div>
+              <div className="text-xl md:text-2xl font-bold text-green-900">{stats.activeCampaigns}</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -259,7 +259,7 @@ const Dashboard = () => {
               <BarChart className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-900">{stats.totalEmailsSent.toLocaleString()}</div>
+              <div className="text-xl md:text-2xl font-bold text-purple-900">{stats.totalEmailsSent.toLocaleString()}</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -275,7 +275,7 @@ const Dashboard = () => {
               <TrendingUp className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-900">{stats.successRate}%</div>
+              <div className="text-xl md:text-2xl font-bold text-orange-900">{stats.successRate}%</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -284,27 +284,27 @@ const Dashboard = () => {
       {/* Campaigns List */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold text-gray-900">Your Campaigns</h2>
+          <h2 className="text-xl md:text-2xl font-semibold text-gray-900">Your Campaigns</h2>
         </div>
 
         {campaigns.length === 0 ? (
           <motion.div
             initial={{opacity: 0}}
             animate={{opacity: 1}}
-            className="text-center py-12"
+            className="text-center py-8 md:py-12"
           >
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-8 h-8 text-gray-400" />
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-6 h-6 md:w-8 md:h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No campaigns yet</h3>
-            <p className="text-gray-600 mb-4">Create your first email campaign to get started</p>
-            <Button onClick={() => navigate('/campaign/new')}>
+            <p className="text-gray-600 mb-4 text-sm md:text-base">Create your first email campaign to get started</p>
+            <Button onClick={() => navigate('/campaign/new')} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Create Campaign
             </Button>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
             {campaigns.map((campaign, index) => (
               <motion.div
                 key={campaign.id}
@@ -314,13 +314,13 @@ const Dashboard = () => {
               >
                 <Card className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       {editingCampaign === campaign.id ? (
-                        <div className="flex items-center space-x-2 flex-1">
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
                           <Input
                             value={editingName}
                             onChange={(e) => setEditingName(e.target.value)}
-                            className="text-lg font-medium"
+                            className="text-base md:text-lg font-medium"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 saveCampaignName(campaign.id)
@@ -330,30 +330,35 @@ const Dashboard = () => {
                             }}
                             autoFocus
                           />
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => saveCampaignName(campaign.id)}
-                          >
-                            <Check className="w-4 h-4 text-green-600" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={cancelEditing}
-                          >
-                            <X className="w-4 h-4 text-red-600" />
-                          </Button>
+                          <div className="flex space-x-1 flex-shrink-0">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => saveCampaignName(campaign.id)}
+                              className="p-1 h-8 w-8"
+                            >
+                              <Check className="w-4 h-4 text-green-600" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={cancelEditing}
+                              className="p-1 h-8 w-8"
+                            >
+                              <X className="w-4 h-4 text-red-600" />
+                            </Button>
+                          </div>
                         </div>
                       ) : (
                         <>
                           <CardTitle 
-                            className="text-lg cursor-pointer hover:text-blue-600"
+                            className="text-base md:text-lg cursor-pointer hover:text-blue-600 flex-1 min-w-0 truncate"
                             onClick={() => navigate(`/campaign/${campaign.id}`)}
+                            title={campaign.name}
                           >
                             {campaign.name}
                           </CardTitle>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1 flex-shrink-0">
                             <Button
                               size="sm"
                               variant="ghost"
@@ -361,8 +366,9 @@ const Dashboard = () => {
                                 e.stopPropagation()
                                 startEditing(campaign)
                               }}
+                              className="p-1 h-8 w-8"
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Edit2 className="w-3 h-3" />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -370,62 +376,67 @@ const Dashboard = () => {
                                   size="sm"
                                   variant="ghost"
                                   onClick={(e) => e.stopPropagation()}
+                                  className="p-1 h-8 w-8"
                                 >
-                                  <Trash2 className="w-4 h-4 text-red-600" />
+                                  <Trash2 className="w-3 h-3 text-red-600" />
                                 </Button>
                               </AlertDialogTrigger>
-                              <AlertDialogContent>
+                              <AlertDialogContent className="mx-4">
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Are you sure you want to delete "{campaign.name}"? This action cannot be undone and will also delete all associated templates, recipients, and configurations.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                  <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => deleteCampaign(campaign.id)}
-                                    className="bg-red-600 hover:bg-red-700"
+                                    className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
                                   >
                                     Delete
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                            <Badge className={getStatusColor(campaign.status)}>
-                              {campaign.status}
-                            </Badge>
                           </div>
                         </>
                       )}
                     </div>
-                    {editingCampaign !== campaign.id && (
-                      <CardDescription className="flex items-center text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        Created {formatDate(campaign.created_at)}
-                      </CardDescription>
-                    )}
+                    <div className="flex items-center justify-between gap-2">
+                      {editingCampaign !== campaign.id && (
+                        <>
+                          <CardDescription className="flex items-center text-xs md:text-sm text-gray-600 flex-1 min-w-0">
+                            <Calendar className="w-3 h-3 md:w-4 md:h-4 mr-1 flex-shrink-0" />
+                            <span className="truncate">Created {formatDate(campaign.created_at)}</span>
+                          </CardDescription>
+                          <Badge className={`${getStatusColor(campaign.status)} text-xs flex-shrink-0`}>
+                            {campaign.status}
+                          </Badge>
+                        </>
+                      )}
+                    </div>
                   </CardHeader>
                   {editingCampaign !== campaign.id && (
                     <CardContent 
-                      className="cursor-pointer"
+                      className="cursor-pointer pt-0"
                       onClick={() => navigate(`/campaign/${campaign.id}`)}
                     >
                       <div className="space-y-2">
                         {campaign.total_emails && (
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs md:text-sm">
                             <span className="text-gray-600">Total emails:</span>
                             <span className="font-medium">{campaign.total_emails.toLocaleString()}</span>
                           </div>
                         )}
                         {campaign.sent_emails && (
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs md:text-sm">
                             <span className="text-gray-600">Sent:</span>
                             <span className="font-medium text-green-600">{campaign.sent_emails.toLocaleString()}</span>
                           </div>
                         )}
                         {campaign.failed_emails && campaign.failed_emails > 0 && (
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs md:text-sm">
                             <span className="text-gray-600">Failed:</span>
                             <span className="font-medium text-red-600">{campaign.failed_emails.toLocaleString()}</span>
                           </div>
