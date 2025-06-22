@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string | null
+          csv_url: string | null
           failed_count: number | null
           id: string
           name: string
@@ -26,6 +27,7 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string | null
+          csv_url?: string | null
           failed_count?: number | null
           id?: string
           name: string
@@ -39,6 +41,7 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string | null
+          csv_url?: string | null
           failed_count?: number | null
           id?: string
           name?: string
@@ -145,7 +148,7 @@ export type Database = {
           email: string
           host: string
           id: string
-          password: string
+          password: string | null
           port: number
           sender_name: string
           user_id: string
@@ -156,7 +159,7 @@ export type Database = {
           email: string
           host: string
           id?: string
-          password: string
+          password?: string | null
           port: number
           sender_name: string
           user_id: string
@@ -167,7 +170,7 @@ export type Database = {
           email?: string
           host?: string
           id?: string
-          password?: string
+          password?: string | null
           port?: number
           sender_name?: string
           user_id?: string
@@ -185,6 +188,7 @@ export type Database = {
       templates: {
         Row: {
           body: string
+          campaign_id: string | null
           created_at: string | null
           id: string
           name: string
@@ -195,6 +199,7 @@ export type Database = {
         }
         Insert: {
           body: string
+          campaign_id?: string | null
           created_at?: string | null
           id?: string
           name: string
@@ -205,6 +210,7 @@ export type Database = {
         }
         Update: {
           body?: string
+          campaign_id?: string | null
           created_at?: string | null
           id?: string
           name?: string
@@ -213,7 +219,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "templates_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
