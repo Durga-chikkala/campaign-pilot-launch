@@ -45,7 +45,7 @@ const CSVUploadStep: React.FC<CSVUploadStepProps> = ({
       const { data: template } = await supabase
         .from('templates')
         .select('placeholders')
-        .eq('user_id', user?.id)
+        .eq('campaign_id', campaignId)
         .single()
 
       if (template?.placeholders) {
