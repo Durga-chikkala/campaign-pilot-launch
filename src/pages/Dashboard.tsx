@@ -7,7 +7,9 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Mail, Calendar, BarChart, TrendingUp } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { Plus, Mail, Calendar, BarChart, TrendingUp, Edit2, Trash2, Check, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface Campaign {
@@ -23,6 +25,8 @@ interface Campaign {
 const Dashboard = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingCampaign, setEditingCampaign] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
   const [stats, setStats] = useState({
     totalCampaigns: 0,
     activeCampaigns: 0,
@@ -72,6 +76,92 @@ const Dashboard = () => {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const startEditing = (campaign: Campaign) => {
+    setEditingCampaign(campaign.id)
+    setEditingName(campaign.name)
+  }
+
+  const cancelEditing = () => {
+    setEditingCampaign(null)
+    setEditingName('')
+  }
+
+  const saveCampaignName = async (campaignId: string) => {
+    if (!editingName.trim()) {
+      toast({
+        title: "Error",
+        description: "Campaign name cannot be empty",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('campaigns')
+        .update({ name: editingName.trim() })
+        .eq('id', campaignId)
+        .eq('user_id', user?.id)
+
+      if (error) throw error
+
+      setCampaigns(prev => prev.map(campaign => 
+        campaign.id === campaignId 
+          ? { ...campaign, name: editingName.trim() }
+          : campaign
+      ))
+
+      setEditingCampaign(null)
+      setEditingName('')
+
+      toast({
+        title: "Success",
+        description: "Campaign name updated successfully",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error updating campaign",
+        description: error.message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const deleteCampaign = async (campaignId: string) => {
+    try {
+      // Delete related data first
+      await supabase.from('recipients').delete().eq('campaign_id', campaignId)
+      await supabase.from('smtp_configs').delete().eq('campaign_id', campaignId)
+      await supabase.from('placeholder_mappings').delete().eq('campaign_id', campaignId)
+      await supabase.from('templates').delete().eq('campaign_id', campaignId)
+      
+      // Finally delete the campaign
+      const { error } = await supabase
+        .from('campaigns')
+        .delete()
+        .eq('id', campaignId)
+        .eq('user_id', user?.id)
+
+      if (error) throw error
+
+      setCampaigns(prev => prev.filter(campaign => campaign.id !== campaignId))
+
+      toast({
+        title: "Success",
+        description: "Campaign deleted successfully",
+      })
+
+      // Refresh stats
+      fetchCampaigns()
+    } catch (error: any) {
+      toast({
+        title: "Error deleting campaign",
+        description: error.message,
+        variant: "destructive",
+      })
     }
   }
 
@@ -222,41 +312,127 @@ const Dashboard = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/campaign/${campaign.id}`)}>
+                <Card className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                      <Badge className={getStatusColor(campaign.status)}>
-                        {campaign.status}
-                      </Badge>
+                      {editingCampaign === campaign.id ? (
+                        <div className="flex items-center space-x-2 flex-1">
+                          <Input
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            className="text-lg font-medium"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                saveCampaignName(campaign.id)
+                              } else if (e.key === 'Escape') {
+                                cancelEditing()
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => saveCampaignName(campaign.id)}
+                          >
+                            <Check className="w-4 h-4 text-green-600" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={cancelEditing}
+                          >
+                            <X className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <CardTitle 
+                            className="text-lg cursor-pointer hover:text-blue-600"
+                            onClick={() => navigate(`/campaign/${campaign.id}`)}
+                          >
+                            {campaign.name}
+                          </CardTitle>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                startEditing(campaign)
+                              }}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-600" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{campaign.name}"? This action cannot be undone and will also delete all associated templates, recipients, and configurations.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteCampaign(campaign.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                            <Badge className={getStatusColor(campaign.status)}>
+                              {campaign.status}
+                            </Badge>
+                          </div>
+                        </>
+                      )}
                     </div>
-                    <CardDescription className="flex items-center text-sm text-gray-600">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      Created {formatDate(campaign.created_at)}
-                    </CardDescription>
+                    {editingCampaign !== campaign.id && (
+                      <CardDescription className="flex items-center text-sm text-gray-600">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        Created {formatDate(campaign.created_at)}
+                      </CardDescription>
+                    )}
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {campaign.total_emails && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Total emails:</span>
-                          <span className="font-medium">{campaign.total_emails.toLocaleString()}</span>
-                        </div>
-                      )}
-                      {campaign.sent_emails && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Sent:</span>
-                          <span className="font-medium text-green-600">{campaign.sent_emails.toLocaleString()}</span>
-                        </div>
-                      )}
-                      {campaign.failed_emails && campaign.failed_emails > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Failed:</span>
-                          <span className="font-medium text-red-600">{campaign.failed_emails.toLocaleString()}</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
+                  {editingCampaign !== campaign.id && (
+                    <CardContent 
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/campaign/${campaign.id}`)}
+                    >
+                      <div className="space-y-2">
+                        {campaign.total_emails && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Total emails:</span>
+                            <span className="font-medium">{campaign.total_emails.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {campaign.sent_emails && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Sent:</span>
+                            <span className="font-medium text-green-600">{campaign.sent_emails.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {campaign.failed_emails && campaign.failed_emails > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Failed:</span>
+                            <span className="font-medium text-red-600">{campaign.failed_emails.toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  )}
                 </Card>
               </motion.div>
             ))}
